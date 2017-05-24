@@ -19,7 +19,7 @@ namespace CSharpTest.Net.Collections
 {
     partial class BPlusTree<TKey, TValue>
     {
-        private bool Rank(NodePin nodePin, TKey key, out int rank)
+        private bool Rank(NodePin nodePin, TKey key, bool dense, out int rank)
         {
             rank = 0;
             try
@@ -34,7 +34,17 @@ namespace CSharpTest.Net.Collections
 
                     if (isValueNode)
                     {
-                        rank += ordinal;
+                        if (dense)
+                        {
+                            for (var i = 0; i < ordinal; i++)
+                            {
+                                rank += me[i].PayloadSize;
+                            }
+                        }
+                        else
+                        {
+                            rank += ordinal;
+                        }
                     }
                     else
                     {
@@ -43,7 +53,7 @@ namespace CSharpTest.Net.Collections
                             var nextPin = _storage.Lock(nodePin, me[i].ChildNode);
                             nodePin.Dispose();
                             int innerRank;
-                            keyInRange = Rank(nextPin, key, out innerRank);
+                            keyInRange = Rank(nextPin, key, dense, out innerRank);
                             rank += innerRank;
                             if (keyInRange) break;
                         }
@@ -62,15 +72,17 @@ namespace CSharpTest.Net.Collections
             }
         }
 
-        private bool Select(NodePin nodePin, int rank, out TKey key, out int offset)
+        private bool Select(NodePin nodePin, int valuesToSkip, out TKey key, out int offset, out int valueOffset, bool desc = true)
         {
             key = default(TKey);
             offset = 0;
+            valueOffset = 0;
             try
             {
                 if (nodePin != null)
                 {
                     Node me = nodePin.Ptr;
+                    Element element;
                     bool isValueNode = me.IsLeaf;
 
                     bool found = false;
@@ -79,11 +91,26 @@ namespace CSharpTest.Net.Collections
                     {
                         while (offset < me.Count)
                         {
-                            key = me[offset].Key;
+                            element = desc ? me[me.Count - offset - 1] : me[offset];
+                            key = element.Key;
 
-							if (offset == rank)
+                            int payloadSize = element.PayloadSize;
+
+                            int currentValueOffset = 0;
+                            while (currentValueOffset < payloadSize)
                             {
-                                found = true;
+                                if ((valueOffset + currentValueOffset) >= valuesToSkip)
+                                {
+                                    found = true;
+                                    break;
+                                }
+                                currentValueOffset++;
+                            }
+
+                            valueOffset += currentValueOffset;
+
+                            if (found)
+                            {
                                 break;
                             }
 
@@ -92,18 +119,20 @@ namespace CSharpTest.Net.Collections
                     }
                     else
                     {
-                        for (var i = 0; i <= me.Count; i++)
+                        for (var i = 0; i < me.Count; i++)
                         {
-							if (me[i].IsEmpty)
+                            element = desc ? me[me.Count - i - 1] : me[i];
+							if (element.IsEmpty)
                             {
                                 continue;
                             }
 
-                            var nextPin = _storage.Lock(nodePin, me[i].ChildNode);
+                            var nextPin = _storage.Lock(nodePin, element.ChildNode);
                             nodePin.Dispose();
                             int innerOffset;
+                            int innerValueOffset;
                             TKey innerFoundKey;
-                            found = Select(nextPin, rank - offset, out innerFoundKey, out innerOffset);
+                            found = Select(nextPin, valuesToSkip - valueOffset, out innerFoundKey, out innerOffset, out innerValueOffset, desc);
                             offset += innerOffset;
 							
                             if (found)

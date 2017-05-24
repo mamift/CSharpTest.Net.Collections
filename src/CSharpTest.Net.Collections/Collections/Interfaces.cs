@@ -47,9 +47,15 @@ namespace CSharpTest.Net.Collections
     public interface INodeStoreWithCount : INodeStorage, Interfaces.ITransactable
     {
         /// <summary>
-        /// Used to retrieve the current record count after opening a store, -1 indicates an invalid entry.
+        /// Used to retrieve the current record count after opening a store. -1 indicates an invalid entry.
         /// Prior to Commit() the count will be set to the actual record count.
         /// </summary>
         int Count { get; set; }
+        
+        /// <summary>
+        /// Used to retrieve the current dense record count after opening a store. -1 indicates an invalid entry.
+        /// Prior to Commit() the count will be set to the actual dense record count.
+        /// </summary>
+        int DenseCount { get; set; }
     }
 }

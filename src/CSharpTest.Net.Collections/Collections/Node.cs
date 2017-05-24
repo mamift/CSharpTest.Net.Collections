@@ -50,6 +50,7 @@ namespace CSharpTest.Net.Collections
             protected readonly Element[] _list;
             protected LockType _ltype;
             protected int _count;
+            protected int _denseCount;
             protected int _version;
 
             public Node(IStorageHandle handle, int elementCount)
@@ -58,6 +59,7 @@ namespace CSharpTest.Net.Collections
                 _list = new Element[elementCount];
                 _ltype = LockType.Insert;
                 _count = 0;
+                _denseCount = 0;
             }
 
             protected Node(Node copyFrom, LockType type)
@@ -65,6 +67,7 @@ namespace CSharpTest.Net.Collections
                 _handle = copyFrom._handle;
                 _list = (Element[])copyFrom._list.Clone();
                 _count = copyFrom._count;
+                _denseCount = copyFrom._denseCount;
                 _ltype = type;
                 if (_ltype == LockType.Update && !IsLeaf)
                     _ltype = LockType.Read;
@@ -85,6 +88,12 @@ namespace CSharpTest.Net.Collections
                 Node node = new Node(handle, nodeSize);
                 Array.Copy(items, 0, node._list, 0, items.Length);
                 node._count = items.Length;
+
+                for (int i = 0; i < items.Length; i++)
+                {
+                    node._denseCount += items[i].PayloadSize;
+                }
+                
                 node._ltype = LockType.Read;
                 return node;
             }
@@ -118,6 +127,9 @@ namespace CSharpTest.Net.Collections
 
             [System.Diagnostics.DebuggerNonUserCode]
             public int Count { get { return _count; } }
+
+            [System.Diagnostics.DebuggerNonUserCode]
+            public int DenseCount { get { return _denseCount; } }
 
             [System.Diagnostics.DebuggerNonUserCode]
             public int Size { get { return _list.Length; } }
@@ -191,6 +203,7 @@ namespace CSharpTest.Net.Collections
                 _list[ordinal] = item;
 
                 _count++;
+                _denseCount += item.PayloadSize;
             }
 
             public void Remove(int ordinal, Element item, IComparer<TKey> comparer)
@@ -206,6 +219,7 @@ namespace CSharpTest.Net.Collections
                     Array.Copy(_list, ordinal + 1, _list, ordinal, _count - ordinal - 1);
 
                 _count--;
+                _denseCount -= item.PayloadSize;
                 _list[_count] = new Element();
             }
 

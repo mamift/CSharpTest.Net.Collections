@@ -82,6 +82,21 @@ namespace CSharpTest.Net.Collections
                 }
             }
 
+            public int DenseCount
+            {
+                get
+                {
+                    INodeStoreWithCount tstore = _store as INodeStoreWithCount;
+                    return (tstore != null) ? tstore.DenseCount : -1;
+                }
+                set
+                {
+                    INodeStoreWithCount tstore = _store as INodeStoreWithCount;
+                    if (tstore != null)
+                        tstore.DenseCount = value;
+                }
+            }
+
             public void Commit()
             {
                 lock (_flushSync) // disallow concurrent async flush
@@ -130,6 +145,9 @@ namespace CSharpTest.Net.Collections
 
             struct FetchFromStore<TNode> : ICreateOrUpdateValue<IStorageHandle, object>
             {
+                public object PreValue { get; private set; }
+                public object PostValue { get; private set; }
+
                 public INodeStorage Storage;
                 public ISerializer<TNode> Serializer;
                 public LurchTable<IStorageHandle, object> DirtyCache;
@@ -138,10 +156,12 @@ namespace CSharpTest.Net.Collections
 
                 public bool CreateValue(IStorageHandle key, out object value)
                 {
+                    PreValue = default(object);
                     if (DirtyCache.TryGetValue(key, out value) && value != null)
                     {
                         Success = true;
                         Value = (TNode)value;
+                        PostValue = Value;
                         return true;
                     }
 
@@ -149,6 +169,7 @@ namespace CSharpTest.Net.Collections
                     if (Success)
                     {
                         value = Value;
+                        PostValue = value;
                         return true;
                     }
 
@@ -157,8 +178,10 @@ namespace CSharpTest.Net.Collections
                 }
                 public bool UpdateValue(IStorageHandle key, ref object value)
                 {
+                    PreValue = value;
                     Success = value != null;
                     Value = (TNode)value;
+                    PostValue = Value;
                     return false;
                 }
             }

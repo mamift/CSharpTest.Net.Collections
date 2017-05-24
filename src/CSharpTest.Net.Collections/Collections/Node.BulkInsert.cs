@@ -177,6 +177,7 @@ namespace CSharpTest.Net.Collections
                 {
                     me = trans.BeginUpdate(thisLock);
                     int inserted = 0;
+                    int insertedDense = 0;
 
                     while (me.Count < me.Size && !value.IsComplete && range.IsKeyInRange(value.Current.Key))
                     {
@@ -191,9 +192,11 @@ namespace CSharpTest.Net.Collections
                         }
                         else
                         {
-                            me.Insert(ordinal, new Element(value.Current.Key, value.Current.Value));
+                            var element = new Element(value.Current.Key, value.Current.Value);
+                            me.Insert(ordinal, element);
                             trans.AddValue(value.Current.Key, value.Current.Value);
                             inserted++;
+                            insertedDense += element.PayloadSize;
                         }
                         counter++;
                         value.MoveNext();
@@ -203,8 +206,11 @@ namespace CSharpTest.Net.Collections
                     if (_hasCount && inserted > 0)
                     {
                         int count = _count, test;
+                        int denseCount = _denseCount, denseTest;
                         while (count != (test = Interlocked.CompareExchange(ref _count, count + inserted, count)))
                             count = test;
+                        while (denseCount != (denseTest = Interlocked.CompareExchange(ref _denseCount, denseCount + insertedDense, denseCount)))
+                            denseCount = denseTest;
                     }
                 }
             }
@@ -251,6 +257,7 @@ namespace CSharpTest.Net.Collections
             try
             {
                 int counter = 0;
+                int denseCounter = 0;
                 using (RootLock root = LockRoot(LockType.Insert, "Merge", false))
                 {
                     if (root.Pin.Ptr.Count != 1)
@@ -274,7 +281,7 @@ namespace CSharpTest.Net.Collections
                             .Merge(_options.KeyComparer, bulkOptions.DuplicateHandling, EnumerateNodeContents(oldRoot), items);
                     }
 
-                    Node newtree = BulkWrite(handles, ref counter, items);
+                    Node newtree = BulkWrite(handles, ref counter, ref denseCounter, items);
                     if (newtree == null) // null when enumeration was empty
                         return 0;
 
@@ -286,6 +293,7 @@ namespace CSharpTest.Net.Collections
                     }
 
                     _count = counter;
+                    _denseCount = denseCounter;
                 }
 
                 //point of no return...
@@ -315,7 +323,7 @@ namespace CSharpTest.Net.Collections
             }
         }
 
-        private Node BulkWrite(ICollection<IStorageHandle> handles, ref int counter, IEnumerable<KeyValuePair<TKey, TValue>> itemsEnum)
+        private Node BulkWrite(ICollection<IStorageHandle> handles, ref int counter, ref int denseCounter, IEnumerable<KeyValuePair<TKey, TValue>> itemsEnum)
         {
             List<Node> working = new List<Node>();
             Node leafNode = null;
@@ -332,8 +340,10 @@ namespace CSharpTest.Net.Collections
 
                     while (leafNode.Count < leafNode.Size && more)
                     {
-                        leafNode.Insert(leafNode.Count, new Element(items.Current.Key, items.Current.Value));
+                        var element = new Element(items.Current.Key, items.Current.Value);
+                        leafNode.Insert(leafNode.Count, element);
                         counter++;
+                        denseCounter += element.PayloadSize;
                         more = items.MoveNext();
                     }
                     _storage.Storage.Update(handle.StoreHandle, _storage.NodeSerializer, leafNode);

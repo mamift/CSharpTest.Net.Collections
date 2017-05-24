@@ -22,6 +22,7 @@ namespace CSharpTest.Net.Collections
         enum RemoveResult { Ignored = 0, Removed = 1, NotFound = 2 }
         struct RemoveAlways : IRemoveValue<TKey, TValue>
         {
+            public TValue PreValue { get; private set; }
             private bool _removed;
             private TValue _value;
             public bool TryGetValue(out TValue value)
@@ -32,30 +33,39 @@ namespace CSharpTest.Net.Collections
             bool IRemoveValue<TKey, TValue>.RemoveValue(TKey key, TValue value)
             {
                 _value = value;
+                PreValue = value;
                 return _removed = true;
             }
         }
         struct RemoveIfValue : IRemoveValue<TKey, TValue>
         {
+            public TValue PreValue { get; private set; }
+
             private readonly TValue _value;
             public RemoveIfValue(TKey key, TValue value)
             {
+                PreValue = default(TValue);
                 _value = value;
             }
             bool IRemoveValue<TKey, TValue>.RemoveValue(TKey key, TValue value)
             {
+                PreValue = value;
                 return EqualityComparer<TValue>.Default.Equals(value, _value);
             }
         }
         struct RemoveIfPredicate : IRemoveValue<TKey, TValue>
         {
+            public TValue PreValue { get; private set; }
+
             private readonly KeyValuePredicate<TKey, TValue> _test;
             public RemoveIfPredicate(KeyValuePredicate<TKey, TValue> test)
             {
+                PreValue = default(TValue);
                 _test = test;
             }
             bool IRemoveValue<TKey, TValue>.RemoveValue(TKey key, TValue value)
             {
+                PreValue = value;
                 return _test(key, value);
             }
         }

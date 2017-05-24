@@ -36,6 +36,20 @@ namespace CSharpTest.Net.Collections
             public bool IsEmpty { get { return ReferenceEquals(null, _child); } }
             public NodeHandle ChildNode { get { return (NodeHandle)_child; } }
             public TValue Payload { get { return (TValue)_child; } }
+            public int PayloadSize {
+                get
+                {
+                    if (IsValue)
+                    {
+                        var array = Payload as Array;
+                        return array != null ? array.Length : 1;
+                    }
+                    else
+                    {
+                        return 0;
+                    }
+                }
+            }
 
             public KeyValuePair<TKey, TValue> ToKeyValuePair()
             {

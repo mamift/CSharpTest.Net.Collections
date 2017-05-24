@@ -199,16 +199,16 @@ namespace CSharpTest.Net.Collections
             return false;
         }
 
-        private int CountValues(NodePin thisLock)
+        private int CountValues(NodePin thisLock, bool dense = false)
         {
             if (thisLock.Ptr.IsLeaf)
-                return thisLock.Ptr.Count;
+                return dense ? thisLock.Ptr.DenseCount : thisLock.Ptr.Count;
 
             int count = 0;
             for (int i = 0; i < thisLock.Ptr.Count; i++)
             {
                 using (NodePin child = _storage.Lock(thisLock, thisLock.Ptr[i].ChildNode))
-                    count += CountValues(child);
+                    count += CountValues(child, dense);
             }
             return count;
         }
