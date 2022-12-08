@@ -12,13 +12,13 @@
  * limitations under the License.
  */
 #endregion
+using CSharpTest.Net.Collections;
+using CSharpTest.Net.Interfaces;
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using CSharpTest.Net.Collections;
-using CSharpTest.Net.Interfaces;
-using Microsoft.Win32.SafeHandles;
 
 // ReSharper disable InconsistentNaming
 namespace CSharpTest.Net.IO
@@ -92,7 +92,7 @@ namespace CSharpTest.Net.IO
             /// </summary>
             public int MaxWriteSize
             {
-                get { return (BlockSize*((BlockSize/4) - 2)) - BlockHeaderSize; }
+                get { return (BlockSize * ((BlockSize / 4) - 2)) - BlockHeaderSize; }
             }
             /// <summary>
             /// The FileOptions used for writing to the file
@@ -191,12 +191,12 @@ namespace CSharpTest.Net.IO
         /// </summary>
         public static uint FirstIdentity { get { return 1; } }
 
-        const int BlockHeaderSize = 16; //length + CRC
+        const int BlockHeaderSize = 17; //Header Size + Length + CRC + Block Count + Block Id
         private const int OffsetOfHeaderSize = 0;
-        private const int OffsetOfLength = 0;
-        private const int OffsetOfCrc32 = 4;
-        private const int OffsetOfBlockCount = 8;
-        private const int OffsetOfBlockId = 12;
+        private const int OffsetOfLength = 1;
+        private const int OffsetOfCrc32 = 5;
+        private const int OffsetOfBlockCount = 9;
+        private const int OffsetOfBlockId = 13;
 
         readonly Options _options;
         readonly int BlockSize;
@@ -269,7 +269,7 @@ namespace CSharpTest.Net.IO
             }
 
             _readers = new StreamCache(
-                new FileStreamFactory(_options.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 8, FileOptions.None), 
+                new FileStreamFactory(_options.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 8, FileOptions.None),
                 4);
         }
 
@@ -299,7 +299,7 @@ namespace CSharpTest.Net.IO
                 {
                     _stream.Dispose();
                     if (_readers is IDisposable)
-                        ((IDisposable) _readers).Dispose();
+                        ((IDisposable)_readers).Dispose();
                     _stream = null;
                     _freeHandles.Clear();
                     _freeBlocks.Clear();
@@ -316,7 +316,7 @@ namespace CSharpTest.Net.IO
         void FlushStream(Stream stream)
         {
             FileStream fs = stream as FileStream;
-            if(fs == null || (_options.FileOptions & FileOptions.WriteThrough) != 0)
+            if (fs == null || (_options.FileOptions & FileOptions.WriteThrough) != 0)
                 stream.Flush();
             else
             {
@@ -381,7 +381,7 @@ namespace CSharpTest.Net.IO
                 return;
             }
 
-            lock(_sync)
+            lock (_sync)
             {
                 if (_stream == null)
                     throw new ObjectDisposedException(GetType().FullName);
@@ -404,7 +404,7 @@ namespace CSharpTest.Net.IO
                         _firstFreeBlock = Math.Min(_firstFreeBlock, ifree);
                         break;
                     }
-                    _reservedBlocks = _freeBlocks.Invert((_sections.Length*BlocksPerSection) - 1);
+                    _reservedBlocks = _freeBlocks.Invert((_sections.Length * BlocksPerSection) - 1);
                 }
             }
         }
@@ -429,7 +429,7 @@ namespace CSharpTest.Net.IO
         #region Private Implementation
         private void LoadSections(Stream stream)
         {
-            switch(_options.LoadingRule)
+            switch (_options.LoadingRule)
             {
                 case LoadingRule.Primary:
                     if (!LoadSections(stream, LoadFrom.FirstBlock))
@@ -553,8 +553,8 @@ namespace CSharpTest.Net.IO
                             for (int i = start; i <= free; i++)
                                 _freeBlocks.Remove(i);
 
-                            uint blockId = (uint) start;
-                            blockId |= ((uint) Math.Min(16, blocksNeeded) - 1 << 28) & 0xF0000000u;
+                            uint blockId = (uint)start;
+                            blockId |= ((uint)Math.Min(16, blocksNeeded) - 1 << 28) & 0xF0000000u;
                             return blockId;
                         }
                     }
@@ -584,7 +584,7 @@ namespace CSharpTest.Net.IO
             {
                 _firstFreeBlock = Math.Min(_firstFreeBlock, free);
 
-                if(block.ActualBlocks == 16)
+                if (block.ActualBlocks == 16)
                 {
                     using (_sections[block.Section].Read(ref block, true, _fget))
                     { }
@@ -662,7 +662,7 @@ namespace CSharpTest.Net.IO
             uint oldblockId = _sections[href.Section][href.Offset];
 
             int blocksNeeded = Math.Max(1, (length + BlockHeaderSize + BlockSize - 1) / BlockSize);
-            if (blocksNeeded > BlocksPerSection-2)
+            if (blocksNeeded > BlocksPerSection - 2)
                 throw new ArgumentOutOfRangeException("length");
 
             uint blockId = TakeBlocks(blocksNeeded);
@@ -853,7 +853,7 @@ namespace CSharpTest.Net.IO
 
                 if (phase2 && ReadUInt32(0) != CalcCrc32())
                     throw new InvalidDataException();
-                else 
+                else
                     MakeValid();
 
                 long phaseShift = phase2 ? (SectionSize - BlockSize) : 0;
@@ -887,7 +887,7 @@ namespace CSharpTest.Net.IO
                 do
                 {
                     retry = false;
-                    long position = _sectionPosition + (BlockSize*block.Offset);
+                    long position = _sectionPosition + (BlockSize * block.Offset);
                     bytes = new byte[headerOnly ? BlockHeaderSize : block.ActualBlocks * BlockSize];
 
                     readBytes = fget(position, bytes, 0, bytes.Length);
@@ -895,9 +895,9 @@ namespace CSharpTest.Net.IO
                         throw new InvalidDataException();
 
                     headerSize = bytes[OffsetOfHeaderSize];
-                    length = (int) GetUInt32(bytes, OffsetOfLength) & 0x00FFFFFF;
+                    length = (int)GetUInt32(bytes, OffsetOfLength);
 
-                    block.ActualBlocks = (int) GetUInt32(bytes, OffsetOfBlockCount);
+                    block.ActualBlocks = (int)GetUInt32(bytes, OffsetOfBlockCount);
                     uint blockId = GetUInt32(bytes, OffsetOfBlockId);
 
                     if (headerSize < BlockHeaderSize || blockId != block.Identity ||
@@ -905,14 +905,14 @@ namespace CSharpTest.Net.IO
                          (block.Count == 16 && block.ActualBlocks < 16)))
                         throw new InvalidDataException();
 
-                    if (block.ActualBlocks != Math.Max(1, (length + headerSize + BlockSize - 1)/BlockSize))
+                    if (block.ActualBlocks != Math.Max(1, (length + headerSize + BlockSize - 1) / BlockSize))
                         throw new InvalidDataException();
 
                     if (headerOnly)
                         return null;
                     if (readBytes < length + headerSize)
                     {
-                        retry = bytes.Length != block.ActualBlocks*BlockSize;
+                        retry = bytes.Length != block.ActualBlocks * BlockSize;
                     }
                 } while (retry);
 
@@ -946,8 +946,8 @@ namespace CSharpTest.Net.IO
 
                         if (block.Count == 16)
                         {
-                            long position = (long)BlocksPerSection*BlockSize*block.Section;
-                            position += BlockSize*block.Offset;
+                            long position = (long)BlocksPerSection * BlockSize * block.Section;
+                            position += BlockSize * block.Offset;
                             byte[] header = new byte[BlockHeaderSize];
                             if (BlockHeaderSize != fget(position, header, 0, header.Length))
                                 throw new InvalidDataException();
@@ -962,7 +962,7 @@ namespace CSharpTest.Net.IO
 
             public uint this[int index]
             {
-                get 
+                get
                 {
                     if (index < 1 || index >= BlocksPerSection - 1)
                         throw new ArgumentOutOfRangeException();
@@ -982,7 +982,7 @@ namespace CSharpTest.Net.IO
             {
                 int offset = ordinal << 2;
                 int start = _baseOffset + offset;
-                lock(_blockData)
+                lock (_blockData)
                     PutUInt32(_blockData, start, value);
             }
 
@@ -997,7 +997,7 @@ namespace CSharpTest.Net.IO
             {
                 Crc32 crc = new Crc32();
                 crc.Add(_blockData, 4, BlockSize - 8);
-                return unchecked((uint) crc.Value);
+                return unchecked((uint)crc.Value);
             }
 
             private bool CheckValid()
