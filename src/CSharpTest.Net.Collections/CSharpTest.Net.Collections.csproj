@@ -1,6 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <ProductVersion>9.0.30729</ProductVersion>
     <RootNamespace>CSharpTest.Net</RootNamespace>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyTitle>CSharpTest.Net.Collections.dll</AssemblyTitle>
@@ -19,12 +18,12 @@
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/mamift/CSharpTest.Net.Collections/</RepositoryUrl>
     <PackageTags>BPlusTree, BTreeDictionary, BTreeList, LurchTable, MergeSort, OrderedEnumeration, OrdinalList</PackageTags>
-    <PackageReleaseNotes>Same as v14.906.1403.1082, but ported to .NET Standard 2.0 (this version is marked as 14.906.1403.1083).</PackageReleaseNotes>
-    <AssemblyVersion>14.906.1403.1083</AssemblyVersion>
-    <FileVersion>14.906.1403.1083</FileVersion>
+    <PackageReleaseNotes>This release includes:
+* Fix for corruption of block headers when block size &gt; 4096 #1
+* Switched to sensible, tripartite versioning!</PackageReleaseNotes>
     <PackageId>CSharpTest.Net.Collections-NetStd2</PackageId>
     <Authors>Roger Knapp</Authors>
-    <Version>14.906.1403.1084</Version>
+    <Version>14.907.0</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
