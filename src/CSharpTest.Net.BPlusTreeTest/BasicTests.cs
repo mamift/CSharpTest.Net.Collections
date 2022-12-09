@@ -359,7 +359,7 @@ namespace CSharpTest.Net.BPlusTree.Test
                 Assert.IsTrue(data.TryAdd(1, "a"));
                 Assert.IsFalse(data.TryAdd(1, "a"));
 
-                Assert.IsTrue(data.TryUpdate(1, "a"));
+                Assert.IsFalse(data.TryUpdate(1, "a"));
                 Assert.IsTrue(data.TryUpdate(1, "c"));
                 Assert.IsTrue(data.TryUpdate(1, "d", "c"));
                 Assert.IsFalse(data.TryUpdate(1, "f", "c"));
