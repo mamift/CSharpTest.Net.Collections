@@ -762,6 +762,46 @@ namespace CSharpTest.Net.Collections
         }
 
         /// <summary>
+        /// Creates a leaderboard of the top N players, with an optional offset.
+        /// </summary>
+        public IEnumerable<KeyValuePair<TKey, TValue>> Top(int skip = 0, int take = 100)
+        {
+            TKey startKey;
+            TKey stopKey;
+
+            using (RootLock root = LockRoot(LockType.Read, "Top"))
+            {
+                int startOffset;
+
+                if (!Select(root.Pin, skip, out startKey, out startOffset))
+                {
+                    throw new InvalidOperationException();
+                }
+            }
+
+            using (RootLock root = LockRoot(LockType.Read, "Top"))
+            {
+                int stopOffset;
+
+                if (!Select(root.Pin, (skip + take) - 1, out stopKey, out stopOffset))
+                {
+                    throw new InvalidOperationException();
+                }
+            }
+
+            return EnumerateRange(startKey, stopKey);
+        }
+
+        /// <summary>
+        /// Get the rank of the specified key
+        /// </summary>
+        public bool TryGetRank(TKey key, out int rank, bool dense = false)
+        {
+            using (RootLock root = LockRoot(LockType.Read, "TryGetRank"))
+                return Rank(root.Pin, key, out rank);
+        }
+
+        /// <summary>
         /// Returns the last key and it's associated value.
         /// </summary>
         public bool TryGetLast(out KeyValuePair<TKey, TValue> item)
