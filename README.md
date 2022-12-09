@@ -1,11 +1,14 @@
 CSharpTest.Net.Collections
 =======================
+## Overview
 
-CSharpTest.Net.Collections (moved from https://code.google.com/p/csharptest-net/)
+This is a fork of https://github.com/csharptest/CSharpTest.Net.Collections, of which the original author stopped work of it back in 2015.
 
-## Change Log ##
+This repo aims to also merge and include changes from all other forks of the above repo. If you have  PR you wish to merge, can you also specifically mention the repo owner ([mamift](https://github.com/mamift/)) so I can action your PR.
 
-2014-09-06	Initial clone and extraction from existing library.
+This repo has a publicly available nuget package as well: 
+
+![image](https://img.shields.io/nuget/v/CSharpTest.Net.Collections-NetStd2?style=plastic)
 
 ## Online Help ##
 
@@ -14,7 +17,7 @@ BPlusTree Help: http://help.csharptest.net/?CSharpTest.Net.BPlusTree~CSharpTest.
 ## Quick start ##
 
 ### LurchTable Example ###
-```
+```C#
 //Example producer/consumer queue where producer threads help when queue is full
 using (var queue = new LurchTable<string, int>(LurchTableOrder.Insertion, 100))
 {
@@ -38,7 +41,7 @@ using (var queue = new LurchTable<string, int>(LurchTableOrder.Insertion, 100))
 ```
 
 ### BPlusTree Example ###
-```
+```C#
 var options = new BPlusTree<string, DateTime>.OptionsV2(PrimitiveSerializer.String, PrimitiveSerializer.DateTime);
 options.CalcBTreeOrder(16, 24);
 options.CreateFile = CreatePolicy.Always;
