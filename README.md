@@ -8,7 +8,7 @@ This repo aims to also merge and include changes from all other forks of the abo
 
 This repo has a publicly available nuget package as well: 
 
-![image](https://img.shields.io/nuget/v/CSharpTest.Net.Collections-NetStd2?style=plastic)
+[<img src="https://img.shields.io/nuget/v/CSharpTest.Net.Collections-NetStd2?style=plastic"/>](https://www.nuget.org/packages/CSharpTest.Net.Collections-NetStd2)
 
 ## Online Help ##
 
