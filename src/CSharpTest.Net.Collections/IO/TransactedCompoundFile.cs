@@ -198,11 +198,12 @@ namespace CSharpTest.Net.IO
         private const int OffsetOfBlockCount = 9;
         private const int OffsetOfBlockId = 13;
 
-        readonly Options _options;
-        readonly int BlockSize;
-        readonly int BlocksPerSection;
-        readonly long SectionSize;
-
+        private readonly Options _options;
+#pragma warning disable 1591
+        public readonly int BlockSize;
+        public readonly int BlocksPerSection;
+        public readonly long SectionSize;
+#pragma warning restore 1591
         readonly object _sync;
         FileSection[] _sections;
 
