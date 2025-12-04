@@ -27,6 +27,10 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
+    <WarningsNotAsErrors>CS1574</WarningsNotAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <WarningsNotAsErrors>CS1574</WarningsNotAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <Compile Update="Resources.Designer.cs">
@@ -45,5 +49,8 @@
   <ItemGroup>
     <EmbeddedResource Include="LICENSE-2.0.txt" />
     <Content Include="README.htm" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Extensions\" />
   </ItemGroup>
 </Project>

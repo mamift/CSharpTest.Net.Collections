@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using CSharpTest.Net.Collections;
+using CSharpTest.Net.Extensions;
 using CSharpTest.Net.Serialization;
 using NUnit.Framework;
 
@@ -43,7 +45,9 @@ namespace CSharpTest.Net.Library.Test
                     { Name = "worker", IsBackground = true };
                 thread.Start();
 
-                var names = Directory.GetFiles(Path.GetTempPath(), "*", SearchOption.AllDirectories);
+                var dir = new DirectoryInfo(Path.GetTempPath());
+                var names = dir.EnumerateFiles( "*", SearchOption.AllDirectories).TryEnumerate()
+                    .Where(f => f != null).Select(f => f.Name).Distinct().ToArray();
                 if (names.Length < 1) throw new Exception("Not enough trash in your temp dir.");
                 var loops = Math.Max(1, 100/names.Length);
                 for(int i=0; i < loops; i++)
@@ -75,8 +79,11 @@ namespace CSharpTest.Net.Library.Test
             using (var tree = new BPlusTree<string, DateTime>(options))
             {
                 var tempDir = new DirectoryInfo(Path.GetTempPath());
-                foreach (var file in tempDir.GetFiles("*", SearchOption.AllDirectories))
+
+                var files = tempDir.EnumerateFiles("*", SearchOption.AllDirectories);
+                foreach (var file in files.TryEnumerate())
                 {
+                    if (file is null) continue;
                     tree.Add(file.FullName, file.LastWriteTimeUtc);
                 }
             }
@@ -84,8 +91,10 @@ namespace CSharpTest.Net.Library.Test
             using (var tree = new BPlusTree<string, DateTime>(options))
             {
                 var tempDir = new DirectoryInfo(Path.GetTempPath());
-                foreach (var file in tempDir.GetFiles("*", SearchOption.AllDirectories))
+                var files = tempDir.EnumerateFiles("*", SearchOption.AllDirectories).TryEnumerate();
+                foreach (var file in files)
                 {
+                    if (file is null) continue;
                     DateTime cmpDate;
                     if (!tree.TryGetValue(file.FullName, out cmpDate))
                         Console.WriteLine("New file: {0}", file.FullName);
